@@ -1,0 +1,18 @@
+[
+  { "city": "New York", "airport": "John F. Kennedy International", "iata": "JFK", "country": "USA" },
+  { "city": "New York", "airport": "LaGuardia Airport", "iata": "LGA", "country": "USA" },
+  { "city": "Los Angeles", "airport": "Los Angeles International", "iata": "LAX", "country": "USA" },
+  { "city": "Chicago", "airport": "O'Hare International", "iata": "ORD", "country": "USA" },
+  { "city": "San Francisco", "airport": "San Francisco International", "iata": "SFO", "country": "USA" },
+
+  { "city": "London", "airport": "Heathrow Airport", "iata": "LHR", "country": "UK" },
+  { "city": "London", "airport": "Gatwick Airport", "iata": "LGW", "country": "UK" },
+  { "city": "London", "airport": "Stansted Airport", "iata": "STN", "country": "UK" },
+  { "city": "Manchester", "airport": "Manchester Airport", "iata": "MAN", "country": "UK" },
+  { "city": "Birmingham", "airport": "Birmingham Airport", "iata": "BHX", "country": "UK" },
+
+  { "city": "Dubai", "airport": "Dubai International", "iata": "DXB", "country": "UAE" },
+  { "city": "Dubai", "airport": "Al Maktoum International", "iata": "DWC", "country": "UAE" },
+  { "city": "Abu Dhabi", "airport": "Zayed International", "iata": "AUH", "country": "UAE" },
+  { "city": "Sharjah", "airport": "Sharjah International", "iata": "SHJ", "country": "UAE" }
+]
