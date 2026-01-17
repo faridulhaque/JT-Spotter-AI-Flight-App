@@ -4,9 +4,10 @@ import dayjs from "dayjs";
 
 type PropsFlightCard = {
   flight: FlightUI;
+  airline: string;
 };
 
-export function FlightCard({ flight }: PropsFlightCard) {
+export function FlightCard({ flight, airline }: PropsFlightCard) {
   return (
     <Box
       sx={{
@@ -34,7 +35,7 @@ export function FlightCard({ flight }: PropsFlightCard) {
       >
         <Box>
           <Typography sx={{ color: "#1e3a8a", fontWeight: 600 }}>
-            {flight.airlineCode}
+            {airline}
           </Typography>
           <Typography variant="body2">{flight.flightNumber}</Typography>
         </Box>

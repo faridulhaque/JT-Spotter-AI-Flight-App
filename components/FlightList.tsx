@@ -3,13 +3,14 @@ import React from "react";
 import { FlightCard } from "./FlightCard";
 type PropsFlightList = {
   flights: FlightUI[];
+  carriers: Record<string, string>
 };
 
-function FlightList({ flights }: PropsFlightList) {
+function FlightList({ flights, carriers }: PropsFlightList) {
   return (
-    <div className="w-full px-2 sm:px-4 md:px-0 md:w-11/12 max-w-6xl mx-auto py-10">
+    <div className="w-full px-2 sm:px-4 md:px-0 md:w-11/12 max-w-5xl mx-auto py-10">
       {flights.map((f) => (
-        <FlightCard key={f.id} flight={f} />
+        <FlightCard key={f.id} flight={f} airline={carriers[f.airlineCode] ?? f.airlineCode}/>
       ))}
     </div>
   );
