@@ -253,7 +253,7 @@ function HomePage() {
                       },
                     }}
                   >
-                    Charts
+                    Chart
                   </Button>
                 </Box>
               </div>
