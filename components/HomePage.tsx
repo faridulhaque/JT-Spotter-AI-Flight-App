@@ -295,7 +295,7 @@ function HomePage() {
             </div>
 
             {showChart ? (
-              <Chart></Chart>
+              <Chart flights={filteredFlights}></Chart>
             ) : (
               <FlightList
                 data={dataCount}
