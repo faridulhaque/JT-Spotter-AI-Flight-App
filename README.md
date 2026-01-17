@@ -1,7 +1,7 @@
 # 🗂️ Flight Check
 ## 🎥 Demo
 
-**Live Link:**  
+**Live Link:** https://jt-spotter-ai-flight-app.vercel.app/
 
 
 ## 🚀 Overview
