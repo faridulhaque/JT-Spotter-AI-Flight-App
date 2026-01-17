@@ -1,6 +1,6 @@
 "use client";
 import { Airports, FlightOffer, FlightUI } from "@/services/types";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { use, useEffect, useMemo, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -13,6 +13,8 @@ import FlightList from "./FlightList";
 
 function HomePage() {
   const [showChart, setShowChart] = useState(false);
+  const [dataCount, setDataCount] = useState({ starting: 0, ending: 10 });
+
   const [departureValue, setDepartureValue] = useState<Airports | null>(null);
   const [departureInput, setDepartureInput] = useState("");
   const [departureOptions, setDepartureOptions] = useState<Airports[]>([]);
@@ -35,6 +37,8 @@ function HomePage() {
     0, 0,
   ]);
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     async function getSearchData() {
       const res = await fetch(`/api/airports?query=${departureInput}`);
@@ -56,6 +60,7 @@ function HomePage() {
   }, [destinationInput]);
 
   const handleSearch = async () => {
+    setLoading(true);
     const tokenRes = await fetch("/api/token", { method: "POST" });
     const tokenData = await tokenRes.json();
     const token = tokenData?.data?.access_token;
@@ -70,7 +75,7 @@ function HomePage() {
     const flightsData = await flightsRes.json();
 
     setAllData(flightsData.data);
-    setCarriers(flightsData.dictionaries?.carriers ?? {}); 
+    setCarriers(flightsData.dictionaries?.carriers ?? {});
 
     const prices = flightsData.data.map((o: FlightOffer) =>
       Number(o.price.total),
@@ -82,6 +87,7 @@ function HomePage() {
 
     setSelectedAirline(null);
     setSelectedStops(null);
+    setLoading(false);
   };
 
   const sameValueError =
@@ -94,7 +100,6 @@ function HomePage() {
   const buttonDisable = Boolean(
     sameValueError || !departureValue?.iata || !destinationValue?.iata || !date,
   );
-  
 
   const airlineOptions = Object.entries(carriers).map(([code, name]) => ({
     code,
@@ -141,9 +146,6 @@ function HomePage() {
           f.price <= priceRangeValue[1],
       );
   }, [allData, selectedAirline, selectedStops, priceRangeValue]);
-
-  console.log("price ranges", priceRangeValue);
-  console.log("airliens", airlineOptions);
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-blue-300">
@@ -210,80 +212,101 @@ function HomePage() {
           </Button>
         </div>
       </div>
-      <div className="mt-20">
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            onClick={() => setShowChart(false)}
-            variant={showChart ? "outlined" : "contained"}
-            sx={{
-              backgroundColor: showChart ? "transparent" : "#fff",
-              color: showChart ? "#fff" : "#1e3a8a",
-              borderColor: "#fff",
-              "&:hover": {
-                backgroundColor: showChart ? "rgba(255,255,255,0.1)" : "#fff",
-              },
-            }}
-          >
-            Flights
-          </Button>
+      {loading ? (
+        <div className="text-center text-4xl text-white mt-10">Loading...</div>
+      ) : (
+        <>
+          <div className="mt-20">
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                onClick={() => setShowChart(false)}
+                variant={showChart ? "outlined" : "contained"}
+                sx={{
+                  backgroundColor: showChart ? "transparent" : "#fff",
+                  color: showChart ? "#fff" : "#1e3a8a",
+                  borderColor: "#fff",
+                  "&:hover": {
+                    backgroundColor: showChart
+                      ? "rgba(255,255,255,0.1)"
+                      : "#fff",
+                  },
+                }}
+              >
+                Flights
+              </Button>
 
-          <Button
-            onClick={() => setShowChart(true)}
-            variant={showChart ? "contained" : "outlined"}
-            sx={{
-              backgroundColor: showChart ? "#fff" : "transparent",
-              color: showChart ? "#1e3a8a" : "#fff",
-              borderColor: "#fff",
-              "&:hover": {
-                backgroundColor: showChart ? "#fff" : "rgba(255,255,255,0.1)",
-              },
-            }}
-          >
-            Charts
-          </Button>
-        </Box>
-      </div>
-      <div className=" w-full">
-        <div className="shadow-2xl bg-white w-11/12 max-w-5xl rounded-md p-8 mt-20 mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Autocomplete<number>
-              options={stops}
-              getOptionLabel={(o) => `${o} stop${o === 1 ? "" : "s"}`}
-              onChange={(_, v) => setSelectedStops(v)}
-              renderInput={(params) => (
-                <TextField {...params} label="Stops" fullWidth />
-              )}
-            />
-            <Autocomplete<{ code: string; name: string }>
-              options={airlineOptions}
-              getOptionLabel={(o) => o.name}
-              onChange={(_, v) => setSelectedAirline(v?.code ?? null)}
-              renderInput={(params) => (
-                <TextField {...params} label="Airline" fullWidth />
-              )}
-            />
-
-            <Box sx={{ px: 1 }}>
-              <Slider
-                value={priceRangeValue}
-                min={availablePriceRange.min}
-                max={availablePriceRange.max}
-                onChange={(_, v) => setPriceRangeValue(v as [number, number])}
-                valueLabelDisplay="auto"
-              />
+              <Button
+                onClick={() => setShowChart(true)}
+                variant={showChart ? "contained" : "outlined"}
+                sx={{
+                  backgroundColor: showChart ? "#fff" : "transparent",
+                  color: showChart ? "#1e3a8a" : "#fff",
+                  borderColor: "#fff",
+                  "&:hover": {
+                    backgroundColor: showChart
+                      ? "#fff"
+                      : "rgba(255,255,255,0.1)",
+                  },
+                }}
+              >
+                Charts
+              </Button>
             </Box>
           </div>
-        </div>
+          <div className=" w-full">
+            <div className="shadow-2xl bg-white w-11/12 max-w-5xl rounded-md p-8 mt-20 mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Autocomplete<number>
+                  options={stops}
+                  getOptionLabel={(o) => `${o} stop${o === 1 ? "" : "s"}`}
+                  onChange={(_, v) => {
+                    setSelectedStops(v);
+                    setDataCount({ starting: 0, ending: 10 });
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Stops" fullWidth />
+                  )}
+                />
+                <Autocomplete<{ code: string; name: string }>
+                  options={airlineOptions}
+                  getOptionLabel={(o) => o.name}
+                  onChange={(_, v) => {
+                    setSelectedAirline(v?.code ?? null);
+                    setDataCount({ starting: 0, ending: 10 });
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Airline" fullWidth />
+                  )}
+                />
 
-        {showChart ? (
-          <Chart></Chart>
-        ) : (
-          <FlightList
-            carriers={carriers}
-            flights={filteredFlights}
-          ></FlightList>
-        )}
-      </div>
+                <Box sx={{ px: 1 }}>
+                  <Slider
+                    value={priceRangeValue}
+                    min={availablePriceRange.min}
+                    max={availablePriceRange.max}
+                    onChange={(_, v) => {
+                      setPriceRangeValue(v as [number, number]);
+                      setDataCount({ starting: 0, ending: 10 });
+                    }}
+                    valueLabelDisplay="auto"
+                  />
+                </Box>
+              </div>
+            </div>
+
+            {showChart ? (
+              <Chart></Chart>
+            ) : (
+              <FlightList
+                data={dataCount}
+                setData={setDataCount}
+                carriers={carriers}
+                flights={filteredFlights}
+              ></FlightList>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
