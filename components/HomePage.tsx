@@ -1,16 +1,18 @@
 "use client";
-import { Airports } from "@/services/types";
+import { Airports, FlightOffer } from "@/services/types";
 import React, { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
-import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
+import Chart from "./Chart";
+import FlightList from "./FlightList";
 
-function Layout() {
+function HomePage() {
+  const [showChart, setShowChart] = useState(false);
   const [departureValue, setDepartureValue] = useState<Airports | null>(null);
   const [departureInput, setDepartureInput] = useState("");
   const [departureOptions, setDepartureOptions] = useState<Airports[]>([]);
@@ -23,7 +25,7 @@ function Layout() {
 
   const [date, setDate] = useState<Dayjs | null>(null);
 
-  const [allData, setAllData] = useState([]);
+  const [allData, setAllData] = useState<FlightOffer[] | null>(null);
 
   useEffect(() => {
     async function getSearchData() {
@@ -50,15 +52,13 @@ function Layout() {
     const tokenData = await tokenRes.json();
     const token = tokenData?.data?.access_token;
     const dateString = date?.format("YYYY-MM-DD");
+    const url = `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${departureValue?.iata}&destinationLocationCode=${destinationValue?.iata}&departureDate=${dateString}&adults=1`;
 
-    const flightsRes = await fetch(
-      `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${departureValue?.iata}&destinationLocationCode=${destinationValue?.iata}&departureDate=${dateString}&adults=1`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    const flightsRes = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
 
     const flightsData = await flightsRes.json();
     setAllData(flightsData.data);
@@ -75,9 +75,32 @@ function Layout() {
     sameValueError || !departureValue?.iata || !destinationValue?.iata || !date,
   );
 
+  //   console.log("alldata", allData);
+
+  const flights = (allData ?? []).map((offer) => {
+    const segments = offer.itineraries[0].segments;
+    const first = segments[0];
+    const last = segments[segments.length - 1];
+
+    return {
+      id: offer.id,
+      airlineCode: first.carrierCode,
+      flightNumber: `${first.carrierCode}${first.number}`,
+      from: first.departure.iataCode,
+      to: last.arrival.iataCode,
+      departureAt: first.departure.at,
+      arrivalAt: last.arrival.at,
+      price: Number(offer.price.total),
+      currency: offer.price.currency,
+      stops: segments.length - 1,
+    };
+  });
+
+  console.log("flights", flights);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-300">
-      <div className="shadow-2xl bg-white w-11/12 max-w-5xl rounded-md p-8">
+    <div className="min-h-screen flex flex-col items-center bg-blue-300">
+      <div className="shadow-2xl bg-white w-11/12 max-w-5xl rounded-md p-8 mt-40">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Autocomplete<Airports>
             options={departureOptions}
@@ -140,8 +163,48 @@ function Layout() {
           </Button>
         </div>
       </div>
+      <div className="mt-20">
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            onClick={() => setShowChart(false)}
+            variant={showChart ? "outlined" : "contained"}
+            sx={{
+              backgroundColor: showChart ? "transparent" : "#fff",
+              color: showChart ? "#fff" : "#1e3a8a",
+              borderColor: "#fff",
+              "&:hover": {
+                backgroundColor: showChart ? "rgba(255,255,255,0.1)" : "#fff",
+              },
+            }}
+          >
+            Flights
+          </Button>
+
+          <Button
+            onClick={() => setShowChart(true)}
+            variant={showChart ? "contained" : "outlined"}
+            sx={{
+              backgroundColor: showChart ? "#fff" : "transparent",
+              color: showChart ? "#1e3a8a" : "#fff",
+              borderColor: "#fff",
+              "&:hover": {
+                backgroundColor: showChart ? "#fff" : "rgba(255,255,255,0.1)",
+              },
+            }}
+          >
+            Charts
+          </Button>
+        </Box>
+      </div>
+      <div className=" w-full">
+        {showChart ? (
+          <Chart></Chart>
+        ) : (
+          <FlightList flights={flights}></FlightList>
+        )}
+      </div>
     </div>
   );
 }
 
-export default Layout;
+export default HomePage;
