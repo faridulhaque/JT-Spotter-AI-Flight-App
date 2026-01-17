@@ -1,13 +1,27 @@
 "use client";
 import { Airports } from "@/services/types";
 import React, { useEffect, useState } from "react";
+import TextField from "@mui/material/TextField";
+import Autocomplete from "@mui/material/Autocomplete";
+import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs, { Dayjs } from "dayjs";
+import { Button } from "@mui/material";
 
 function Layout() {
+  const [departureValue, setDepartureValue] = useState<Airports | null>(null);
+  const [departureInput, setDepartureInput] = useState("");
   const [departureOptions, setDepartureOptions] = useState<Airports[]>([]);
+
+  const [destinationValue, setDestinationValue] = useState<Airports | null>(
+    null,
+  );
+  const [destinationInput, setDestinationInput] = useState("");
   const [destinationOptions, setDestinationOptions] = useState<Airports[]>([]);
 
-  const [departureInput, setDepartureInput] = useState("");
-  const [destinationInput, setDestinationInput] = useState("");
+  const [date, setDate] = useState<Dayjs | null>(null);
 
   const [allData, setAllData] = useState([]);
 
@@ -35,41 +49,97 @@ function Layout() {
     const tokenRes = await fetch("/api/token", { method: "POST" });
     const tokenData = await tokenRes.json();
     const token = tokenData?.data?.access_token;
-    console.log("token", token);
+    const dateString = date?.format("YYYY-MM-DD");
 
-    // const flightsRes = await fetch(
-    //   `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=JFK&destinationLocationCode=LHR&departureDate=2026-01-20&adults=1`,
-    //   {
-    //     headers: {
-    //       Authorization: `Bearer ${token}`,
-    //     },
-    //   },
-    // );
+    const flightsRes = await fetch(
+      `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${departureValue?.iata}&destinationLocationCode=${destinationValue?.iata}&departureDate=${dateString}&adults=1`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
 
-    // const flightsData = await flightsRes.json();
-    // setAllData(flightsData.data);
+    const flightsData = await flightsRes.json();
+    setAllData(flightsData.data);
   };
 
-  console.log("alldata", allData);
+  const sameValueError =
+    departureValue &&
+    destinationValue &&
+    departureValue.iata === destinationValue.iata
+      ? "Departure value and destination value can't be the same"
+      : null;
+
+  const buttonDisable = Boolean(
+    sameValueError || !departureValue?.iata || !destinationValue?.iata || !date,
+  );
 
   return (
-    <div>
-      <input
-        onChange={(e) => setDepartureInput(e.target.value)}
-        type="text"
-        placeholder="Medium"
-        className="input input-md"
-      />
-      <input
-        onChange={(e) => setDestinationInput(e.target.value)}
-        type="text"
-        placeholder="Medium"
-        className="input input-md"
-      />
+    <div className="min-h-screen flex items-center justify-center bg-blue-300">
+      <div className="shadow-2xl bg-white w-11/12 max-w-5xl rounded-md p-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Autocomplete<Airports>
+            options={departureOptions}
+            value={departureValue}
+            inputValue={departureInput}
+            getOptionLabel={(o) => `${o.city} (${o.iata})`}
+            onChange={(_, value) => setDepartureValue(value)}
+            onInputChange={(_, value) => setDepartureInput(value)}
+            renderInput={(params) => (
+              <TextField {...params} label="Departure" fullWidth />
+            )}
+          />
 
-      <button onClick={handleSearch} className="btn btn-primary">
-        Click
-      </button>
+          <Autocomplete<Airports>
+            options={destinationOptions}
+            value={destinationValue}
+            inputValue={destinationInput}
+            getOptionLabel={(o) => `${o.city} (${o.iata})`}
+            onChange={(_, value) => setDestinationValue(value)}
+            onInputChange={(_, value) => setDestinationInput(value)}
+            renderInput={(params) => (
+              <TextField {...params} label="Destination" fullWidth />
+            )}
+          />
+
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Date"
+              value={date}
+              minDate={dayjs().add(1, "day")}
+              onChange={(v) => setDate(v)}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                },
+              }}
+            />
+          </LocalizationProvider>
+        </div>
+
+        {sameValueError && (
+          <div className="text-center text-red-500 mt-6">{sameValueError}</div>
+        )}
+
+        <div className="w-full flex items-center justify-center h-20">
+          <Button
+            disabled={buttonDisable}
+            onClick={handleSearch}
+            variant="contained"
+            fullWidth
+            sx={{
+              maxWidth: { sm: "auto" },
+              backgroundColor: "rgb(147 197 253)",
+              "&:hover": {
+                backgroundColor: "rgb(96 165 250)",
+              },
+            }}
+          >
+            Search
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
